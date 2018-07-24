@@ -161,8 +161,8 @@ def boosted_model(df, pred_label='ip30'):
 	#                                 random_state=20)
 
 	print('\n')
-	print('Best score for gradient boosted regressor: {}'.format(max(best_dic.values())))
-	print('------------------------------------------------')
+	# print('Best score for gradient boosted regressor: {}'.format(max(best_dic.values())))
+	# print('------------------------------------------------')
 	print('Score for current model predicting for {}: {}'.format(pred_label, score))
 	# print('Cross val score of: {}'.format(scores.mean()))
 
@@ -171,11 +171,13 @@ def boosted_model(df, pred_label='ip30'):
 def cluster(df):
 	model_df = df[['upper_almond_bar_perfs', 'upper_almond_marine_perfs',
 				   'middle_almond_non-marine_perfs', 'middle_almond_marine_wedge_perfs',
-				   'lower_almond_non-marine_perfs', 'lower_almond_fluvial_perfs',
-				   'lat', 'lon']]
+				   'lower_almond_non-marine_perfs', 'lower_almond_fluvial_perfs']]
 	# model_df = df[['lat', 'lon']]
+	# model_df = df[['ip180']]
 	# clust_mod = DBSCAN(eps=.99)
 	# clust_pred = clust_mod.fit_predict(model_df.values)
+
+    ### cluser on dates
 
 	clust_mod = KMeans(n_clusters=8,
 					   n_init=10,
@@ -188,7 +190,7 @@ def cluster(df):
 
 def plot_clusters(df, clusters):
 	plt.close()
-	fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+	fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
 	plots = df.loc[:, ['lat', 'lon']]
 	plots.loc[:, 'cluster'] = clusters
@@ -215,12 +217,23 @@ if __name__ == '__main__':
 	clusters = cluster(clean_df)
 	plot_clusters(clean_df, clusters)
 
+	clean_df.loc[:, 'cluster'] = clusters
+
+	pred, score = boosted_model(clean_df, 'ip365')
+
+	# for clust in set(clusters):
+	# 	if clean_df.loc[clean_df['cluster'] == clust, :].shape[0] == 1:
+	# 		print(clean_df.loc[clean_df['cluster'] == clust, :])
+	# 	pass
+	# 	pred, score = boosted_model(clean_df.loc[clean_df['cluster'] == clust, :],
+	# 								'ip365')
+
 	# best_dic = {'ip30': 0.158, 'ip180': 0.269, 'ip365': 0.309}
 	# for pred_lab in ['ip30', 'ip180', 'ip365']:
-	#     # pred = forest_model(clean_df, pred_lab)
-	#     pred, score = boosted_model(clean_df, pred_lab)
-	#     if round(score, 3) > best_dic[pred_lab]:
-	#         best_dic[pred_lab] = round(score, 3)
+	# 	# pred = forest_model(clean_df, pred_lab)
+	# 	pred, score = boosted_model(clean_df, pred_lab)
+	# 	if round(score, 3) > best_dic[pred_lab]:
+	# 		best_dic[pred_lab] = round(score, 3)
 	#
 	# print('\n')
 	# pprint.pprint(best_dic, width=1)
