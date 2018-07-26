@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.cluster import DBSCAN, KMeans
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def data_clean(df):
@@ -192,23 +193,38 @@ def plot_clusters(df, clusters):
 	plt.close()
 	fig, ax = plt.subplots(1, 1, figsize=(6, 6))
 
-	plots = df.loc[:, ['lat', 'lon']]
+	plots = df.loc[:, ['lat', 'lon', 'ip180']]
 	plots.loc[:, 'cluster'] = clusters
 
-	colors = {0: '#5cf442', 1: '#ffb600', 2: '#007003', 3: '#34af88',
-			  4: '#f4f142', 5: '#4fbbff', 6: '#171d7a', 7: '#ae8cff'}
+	colors = {'e': '#ffcc14', 'b': '#f2451a', 'd': '#e28b00', 'a': '#dd0000',
+			  'c': '#e86519', 'g': '#ffee59', 'f': '#ffe714', 'h': '#d4ff2b'}
+	alpha_clust = {0: 'a', 1: 'b', 2: 'c', 3: 'd', 4: 'e', 5: 'f', 6: 'g', 7: 'h'}
 
+	rel = 0
+	clust_vals = {}
 	for clust in plots['cluster'].unique():
 		clust_plot = plots.loc[plots['cluster'] == clust, :]
+		ip = clust_plot['ip180'].mean()
+		rel += ip
+		clust_vals[ip] = clust
+
+	for i, val in enumerate(sorted(clust_vals)[::-1]):
+		plots.loc[plots['cluster'] == clust_vals[val], 'cluster'] = alpha_clust[i]
+
+	for clust in sorted(plots['cluster'].unique())[::-1]:
+		clust_plot = plots.loc[plots['cluster'] == clust, :]
+		ip = clust_plot['ip180'].mean()
 		ax.plot(clust_plot['lon'].values, clust_plot['lat'].values,
 				marker='o', linestyle='None', color=colors[clust],
-				label=str(clust))
+				label='%.2f' % (ip / rel), markersize=5)
 
 	plt.title('Almond Well Clusters')
 	plt.xlabel('Longitude')
 	plt.ylabel('Latitude')
+	plt.legend(title='Relative Prod')
 
 	plt.savefig('figures/clusters.png')
+
 
 if __name__ == '__main__':
 	g_df = pd.read_csv('data/wamda.csv', encoding='ISO-8859-1', low_memory=False)
