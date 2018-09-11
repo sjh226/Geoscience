@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import re
 
 
 def pivot(file_path):
@@ -15,6 +16,8 @@ def pivot(file_path):
                     new_cols = {col: col + '_' + df_sect['ZONE NAME'].unique()[0]
                                 for col in df_sect.columns if col != 'UWI'}
                     df_sect.rename(index=str, columns=new_cols, inplace=True)
+                    df_sect.replace('', np.nan, inplace=True)
+                    df_sect = df_sect.loc[:, df_sect.notnull().sum().gt(df_sect.shape[0] * 0.05)]
                     if df.empty:
                         df = df.append(df_sect)
                     else:
@@ -22,14 +25,16 @@ def pivot(file_path):
                 df_sect = pd.DataFrame(columns=row)
                 cols = row
             if sect != idx:
-                df_sect = df_sect.append(pd.DataFrame(np.array(row).reshape(1, -1), columns=cols))
+                df_sect = df_sect.append(pd.DataFrame(np.array(row).reshape(1, -1),
+                                         columns=cols))
 
-                # Code for limiting row length (all_data)
-                # df_sect = df_sect.append(pd.DataFrame(np.array(row[:len(cols)]).reshape(1, -1), columns=cols))
-        return df
+    # df.dropna(subset=[col for col in df.columns
+    #                   if col not in ['UWI', r'ZONE NAME[\w\s]+']],
+    #           inplace=True)
+    return df
 
 
 if __name__ == '__main__':
-    df = pivot('data/alldata.txt')
+    df = pivot('data/Selecteddata.txt')
 
-    # df.to_csv('data/select_pivot.csv')
+    df.to_csv('data/select_pivot.csv')
