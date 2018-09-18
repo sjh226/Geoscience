@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import re
+import os
 
 
 def pivot(file_path):
@@ -19,7 +20,7 @@ def pivot(file_path):
                     df_sect.replace('', np.nan, inplace=True)
                     df_sect = df_sect.loc[:, df_sect.notnull().sum().gt(df_sect.shape[0] * 0.05)]
                     if df.empty:
-                        df = df.append(df_sect)
+                        (df.append(df_sect)).to_csv('data/all/data_{}.csv'.format(sect))
                     else:
                         df = df.merge(df_sect)
                 df_sect = pd.DataFrame(columns=row)
@@ -28,13 +29,28 @@ def pivot(file_path):
                 df_sect = df_sect.append(pd.DataFrame(np.array(row).reshape(1, -1),
                                          columns=cols))
 
-    # df.dropna(subset=[col for col in df.columns
-    #                   if col not in ['UWI', r'ZONE NAME[\w\s]+']],
-    #           inplace=True)
     return df
+
+def dataframe_merge(folder):
+    full_df = pd.DataFrame()
+
+    for filename in os.listdir(folder):
+        if filename.endswith('.csv'):
+            df = pd.read_csv(folder + '/' + filename)
+
+            if full_df.empty:
+                full_df = full_df.append(df)
+            else:
+                full_df = full_df.merge(df)
+
+    full_df.to_csv(folder + '_data.csv')
+
+    return full_df
 
 
 if __name__ == '__main__':
-    df = pivot('data/Selecteddata.txt')
+    # df = pivot('data/alldata.txt')
+    #
+    # df.to_csv('data/all_pivot.csv')
 
-    df.to_csv('data/select_pivot.csv')
+    df = dataframe_merge('data/all')
