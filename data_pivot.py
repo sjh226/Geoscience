@@ -62,9 +62,18 @@ def sql_push(df, sect):
 	cols = zip(df.columns[1:], col_type)
 
 	form = ''
+	string_cols = '('
 	for col, typ in list(cols):
-		form += col + ' ' + typ + ', '
-	form = form.rstrip(', ').replace(']_', '').replace('[', '').replace('-_', '')
+		try:
+			int(col[0])
+			form += '_' + col.lstrip('.') + ' ' + typ + ', '
+			string_cols += '_' + col.lstrip('.') + ', '
+		except:
+			form += col.lstrip('.') + ' ' + typ + ', '
+			string_cols += col.lstrip('.') + ', '
+
+	form = form.rstrip(', ').replace(']_', '').replace('[', '').replace('-_', '').replace('/', '').replace('.', '').replace(':', '').replace('+', '').replace('%', '')
+	string_cols = string_cols.rstrip(', ').replace(']_', '').replace('[', '').replace('-_', '').replace('/', '').replace('.', '').replace(':', '').replace('+', '').replace('%', '')
 
 	cursor = connection.cursor()
 
@@ -75,13 +84,12 @@ def sql_push(df, sect):
 	cursor.execute(SQLCommand)
 	connection.commit()
 
-
 	SQLCommand = ("""
 		CREATE TABLE TeamOperationsAnalytics.dbo.Petra_{0} (
 			{1}
 		);
 	""".format(sect, form))
-	print(form)
+
 	cursor.execute(SQLCommand)
 	connection.commit()
 
@@ -89,12 +97,11 @@ def sql_push(df, sect):
 
 	for idx, row in df.iterrows():
 		vals = [row[col] for col in df.columns[1:]]
-		string_cols = '{}'.format(tuple(df.columns[1:].values)).replace("'", "").replace(']', '').replace('[', '').replace('-_', '')
 
 		SQLCommand = ("""
 			INSERT INTO TeamOperationsAnalytics.dbo.Petra_{0} {1}
 			VALUES {2}
-		""".format(sect, string_cols, tuple(vals)))
+		""".format(sect, string_cols + ')', tuple(vals)))
 
 		cursor.execute(SQLCommand)
 		connection.commit()
@@ -104,7 +111,7 @@ def sql_push(df, sect):
 
 
 if __name__ == '__main__':
-	df = pivot('data/alldata.txt')
+	# df = pivot('data/alldata.txt')
 
 	# df = dataframe_merge('data/all')
 
@@ -113,5 +120,21 @@ if __name__ == '__main__':
 		if filename.endswith('.csv'):
 			df = pd.read_csv(folder + '/' + filename)
 			sect = filename.lstrip('data_').rstrip('.csv')
-			if sect not in ['106139', '115788', '125437', '135086']:
-				sql_push(df, sect)
+			# if sect not in ['106139', '115788', '125437', '135086', '144735',
+			# 				'154384', '164033', '173682', '183331', '19298',
+			# 				'192980', '202629', '212278', '221927', '231576',
+			# 				'241225', '250874', '260523', '270172', '279821',
+			# 				'28947', '289470', '299119', '308768', '318417',
+			# 				'328066', '337715', '347364', '357013', '366662',
+			# 				'376311', '38596', '385960', '395609', '405258',
+			# 				'414907', '424556', '434205', '443854', '453503',
+			# 				'463152', '472801', '48245', '482450', '492099',
+			# 				'501748', '511397', '521046', '530695', '540344',
+			# 				'549993', '559642', '569291', '57894', '578940',
+			# 				'588589', '598238', '607887', '617536', '627185',
+			# 				'636834', '646483', '656132', '665781', '67543',
+			# 				'675430', '685079', '694728', '704377', '714026',
+			# 				'723675', '733324', '742973', '752622', '762271',
+			# 				'77192', '86841', '9649', '96490']:
+			print(sect)
+			sql_push(df, sect)
